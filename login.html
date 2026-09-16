@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login CBT - SMK TI BALI GLOBAL BADUNG</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    body {
+      background: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      font-family: 'Inter', sans-serif;
+    }
+    .login-container {
+      background: #ffffff;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 460px;
+      padding: 36px 36px 32px 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+    }
+    .login-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .login-logo {
+      width: 68px;
+      height: 68px;
+      object-fit: contain;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      background: #ffffff;
+      padding: 2px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .login-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+    .login-sub {
+      font-size: 12px;
+      font-weight: 600;
+      color: #2563eb;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+    .role-tabs-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+    .role-tab-btn {
+      padding: 9px 8px;
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .role-tab-btn.active {
+      background: #ffffff;
+      color: #0f172a;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 11px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #0f172a;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+    .btn-login-submit {
+      width: 100%;
+      padding: 12px 16px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 6px;
+    }
+    .btn-login-submit:hover {
+      opacity: 0.95;
+    }
+    .login-error-alert {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      font-size: 12.5px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      display: none;
+    }
+    .credentials-hint {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.5;
+    }
+    .cred-badge {
+      display: inline-block;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #0f172a;
+      font-weight: 600;
+    }
+    .quick-access-btn {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      background: #eff6ff;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .quick-access-btn:hover {
+      background: #dbeafe;
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <div class="login-brand">
+    <img src="assets/img/logo.png" alt="Logo SMK TI Bali Global Badung" class="login-logo">
+    <h1 class="login-title">SMK TI BALI GLOBAL BADUNG</h1>
+    <span class="login-sub">SISTEM UJIAN ONLINE (CBT)</span>
+  </div>
+
+  <div class="role-tabs-container">
+    <button type="button" class="role-tab-btn active" onclick="setRoleTab('siswa')">🎓 Siswa</button>
+    <button type="button" class="role-tab-btn" onclick="setRoleTab('guru')">👨‍🏫 Guru</button>
+    <button type="button" class="role-tab-btn" onclick="setRoleTab('admin')">🛡️ Admin</button>
+  </div>
+
+  <div id="login-error" class="login-error-alert"></div>
+
+  <form id="auth-form">
+    <!-- Siswa Input -->
+    <div id="field-group-siswa">
+      <div class="form-group">
+        <label class="form-label">Nomor Induk Siswa (NIS)</label>
+        <input type="text" id="input-nis" class="form-input" placeholder="Masukkan NIS Anda (contoh: 202601001)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kata Sandi Siswa</label>
+        <input type="password" id="input-pass-siswa" class="form-input" placeholder="Masukkan kata sandi">
+      </div>
+    </div>
+
+    <!-- Guru Input -->
+    <div id="field-group-guru" style="display: none;">
+      <div class="form-group">
+        <label class="form-label">Nomor Induk Pegawai (NIP)</label>
+        <input type="text" id="input-nip" class="form-input" placeholder="Masukkan NIP Guru (contoh: 198705122014021001)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kata Sandi Guru</label>
+        <input type="password" id="input-pass-guru" class="form-input" placeholder="Masukkan kata sandi">
+      </div>
+    </div>
+
+    <!-- Admin Input -->
+    <div id="field-group-admin" style="display: none;">
+      <div class="form-group">
+        <label class="form-label">Passcode Otoritas Sekolah</label>
+        <input type="password" id="input-passcode" class="form-input" placeholder="Masukkan Passcode Otoritas Admin">
+      </div>
+    </div>
+
+    <button type="submit" id="btn-submit" class="btn-login-submit">Masuk sebagai Siswa</button>
+  </form>
+
+  <div class="credentials-hint">
+    <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">Kredensial Login Cepat:</div>
+    <div style="margin-bottom: 6px;">
+      • <strong>Siswa</strong>: NIS <span class="cred-badge">202601001</span> | Sandi: <span class="cred-badge">password</span>
+      <br><button type="button" class="quick-access-btn" onclick="quickFill('siswa', '202601001', 'password')">Isi Cepat Siswa</button>
+    </div>
+    <div style="margin-bottom: 6px;">
+      • <strong>Guru</strong>: NIP <span class="cred-badge">198705122014021001</span> | Sandi: <span class="cred-badge">password</span>
+      <br><button type="button" class="quick-access-btn" onclick="quickFill('guru', '198705122014021001', 'password')">Isi Cepat Guru</button>
+    </div>
+    <div>
+      • <strong>Admin</strong>: Passcode <span class="cred-badge">SMKTI-ADMIN-2026</span>
+      <br><button type="button" class="quick-access-btn" onclick="quickFill('admin', 'SMKTI-ADMIN-2026', '')">Isi Cepat Admin</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentRole = 'siswa';
+
+function setRoleTab(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-tab-btn').forEach((btn, idx) => {
+    btn.classList.toggle('active', (role === 'siswa' && idx === 0) || (role === 'guru' && idx === 1) || (role === 'admin' && idx === 2));
+  });
+
+  document.getElementById('field-group-siswa').style.display = (role === 'siswa') ? 'block' : 'none';
+  document.getElementById('field-group-guru').style.display = (role === 'guru') ? 'block' : 'none';
+  document.getElementById('field-group-admin').style.display = (role === 'admin') ? 'block' : 'none';
+
+  const btn = document.getElementById('btn-submit');
+  if (role === 'siswa') {
+    btn.textContent = 'Masuk sebagai Siswa';
+    btn.style.backgroundColor = '#2563eb';
+  } else if (role === 'guru') {
+    btn.textContent = 'Masuk sebagai Guru';
+    btn.style.backgroundColor = '#16a34a';
+  } else if (role === 'admin') {
+    btn.textContent = 'Otorisasi Akses Admin';
+    btn.style.backgroundColor = '#4f46e5';
+  }
+}
+
+function quickFill(role, identifier, pass) {
+  setRoleTab(role);
+  if (role === 'siswa') {
+    document.getElementById('input-nis').value = identifier;
+    document.getElementById('input-pass-siswa').value = pass;
+  } else if (role === 'guru') {
+    document.getElementById('input-nip').value = identifier;
+    document.getElementById('input-pass-guru').value = pass;
+  } else if (role === 'admin') {
+    document.getElementById('input-passcode').value = identifier;
+  }
+  document.getElementById('auth-form').dispatchEvent(new Event('submit'));
+}
+
+document.getElementById('auth-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const errorEl = document.getElementById('login-error');
+  const btn = document.getElementById('btn-submit');
+
+  errorEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Memvalidasi kredensial...';
+
+  const isStatic = window.location.hostname.includes('github.io') || window.location.protocol === 'file:' || window.location.pathname.endsWith('.html');
+
+  if (isStatic) {
+    // Mode GitHub Pages / Standalone HTML
+    const targetRole = currentRole === 'siswa' ? 'murid' : currentRole;
+    localStorage.setItem('smkti_mock_role', targetRole);
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 400);
+    return;
+  }
+
+  // Mode PHP Server
+  const fd = new FormData();
+  fd.append('login_type', currentRole);
+
+  if (currentRole === 'siswa') {
+    fd.append('nis', document.getElementById('input-nis').value.trim());
+    fd.append('password', document.getElementById('input-pass-siswa').value);
+  } else if (currentRole === 'guru') {
+    fd.append('nip', document.getElementById('input-nip').value.trim());
+    fd.append('password', document.getElementById('input-pass-guru').value);
+  } else if (currentRole === 'admin') {
+    fd.append('passcode', document.getElementById('input-passcode').value.trim());
+  }
+
+  try {
+    const res = await fetch('api/auth.php?action=login', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (data.success) {
+      window.location.href = 'index.php';
+    } else {
+      errorEl.textContent = data.message || 'Kredensial login tidak sesuai.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      setRoleTab(currentRole);
+    }
+  } catch (err) {
+    errorEl.textContent = 'Gagal menghubungi server database.';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    setRoleTab(currentRole);
+  }
+});
+</script>
+
+</body>
+</html>

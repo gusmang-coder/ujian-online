@@ -1411,8 +1411,9 @@ const App = {
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
-        await fetch('api/auth.php?action=logout', { method: 'POST' });
-        window.location.href = 'login.php';
+        try { await fetch('api/auth.php?action=logout', { method: 'POST' }); } catch(e){}
+        const isStatic = window.location.hostname.includes('github.io') || window.location.protocol === 'file:' || window.location.pathname.endsWith('.html');
+        window.location.href = isStatic ? 'login.html' : 'login.php';
       });
     }
   },
