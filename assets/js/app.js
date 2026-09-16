@@ -1,5 +1,344 @@
 // assets/js/app.js - Sistem Ujian Online SMK TI Bali Global Badung
 
+// ==========================================
+// GITHUB PAGES / OFFLINE STATIC ADAPTER
+// Otomatis aktif jika dibuka lewat https://*.github.io atau file://
+// Mengaktifkan simulasi CBT, rilis jadwal guru, pengerjaan murid & penilaian
+// ==========================================
+(function() {
+  const isStatic = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
+  if (!isStatic) return;
+
+  const originalFetch = window.fetch;
+  window.fetch = async function(url, options = {}) {
+    if (typeof url !== 'string' || !url.includes('api/')) {
+      return originalFetch(url, options);
+    }
+
+    const urlObj = new URL(url, window.location.href);
+    const pathname = urlObj.pathname;
+    const action = urlObj.searchParams.get('action') || '';
+    const body = options.body;
+
+    let postData = {};
+    if (body instanceof FormData) {
+      for (let [k, v] of body.entries()) postData[k] = v;
+    }
+
+    const resJson = (data) => new Response(JSON.stringify(data), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    // 1. AUTH API
+    if (pathname.includes('auth.php')) {
+      let role = localStorage.getItem('smkti_mock_role') || 'super_admin';
+      if (action === 'switch_role') {
+        role = postData.role || urlObj.searchParams.get('role') || 'super_admin';
+        localStorage.setItem('smkti_mock_role', role);
+      }
+      const usersByRole = {
+        super_admin: { id: 1, nama: 'Ngurah Andhika Kusuma', role: 'super_admin', sub_role: 'Super Admin', initials: 'AK' },
+        admin: { id: 2, nama: 'Gede Gustriana', role: 'admin', sub_role: 'Admin Sistem', initials: 'GG' },
+        guru: { id: 3, nama: 'Putu Ian, S.Kom.', role: 'guru', sub_role: 'Guru RPL', initials: 'PI' },
+        murid: { id: 5, nama: 'Ngurah Andhika', role: 'murid', sub_role: 'XII RPL 2', initials: 'NA' }
+      };
+      return resJson({ success: true, user: usersByRole[role] || usersByRole.super_admin });
+    }
+
+    // 2. ADMIN API
+    if (pathname.includes('admin.php')) {
+      if (action === 'prepare_sistem') {
+        return resJson({
+          success: true,
+          data: {
+            database: { status: 'Normal', detail: 'Terkoneksi (Respons 42 ms)' },
+            storage: { status: 'Aman', detail: '68,4 GB dari 200 GB terpakai (34%)' },
+            email: { status: 'Aktif', detail: 'SMTP Terverifikasi' }
+          }
+        });
+      }
+      if (action === 'data_web') {
+        return resJson({
+          success: true,
+          stats: { total_admin: 8, super_admin: 2, total_guru: 64, wali_kelas: 12, total_murid: 1248, rombel: 36 },
+          users: [
+            { id: 1, nama: 'Ngurah Andhika Kusuma', email: 'andhika@smktibaliglobal.sch.id', role: 'super_admin', sub_role: 'Super Admin', status: 'Aktif' },
+            { id: 2, nama: 'Putu Ian, S.Kom.', email: 'putu.ian@smktibaliglobal.sch.id', role: 'guru', sub_role: 'Guru RPL', status: 'Aktif' },
+            { id: 3, nama: 'Putu Ade Pranata, S.Pd.', email: 'ade.pranata@smktibaliglobal.sch.id', role: 'guru', sub_role: 'Guru RPL', status: 'Aktif' },
+            { id: 4, nama: 'Gede Gustriana', email: 'gustriana@smktibaliglobal.sch.id', role: 'admin', sub_role: 'Admin Server', status: 'Aktif' },
+            { id: 5, nama: 'Ngurah Andhika', email: '202601001@siswa.smktibaliglobal.sch.id', role: 'murid', sub_role: 'XII RPL 2', status: 'Aktif' },
+            { id: 6, nama: 'Putu Bagus', email: '202601002@siswa.smktibaliglobal.sch.id', role: 'murid', sub_role: 'XII RPL 2', status: 'Aktif' }
+          ]
+        });
+      }
+      if (action === 'riwayat_login') {
+        return resJson({
+          success: true,
+          stats: { login_today: 342, active_users: 218, failed_attempts: 7 },
+          history: [
+            { pengguna: 'Gustriana', role: 'Admin', waktu: 'Hari ini, 08.42', perangkat: 'Chrome - Windows', lokasi_ip: 'Badung 117.102.104.44', status: 'Berhasil' },
+            { pengguna: 'Putu Ian', role: 'Admin', waktu: 'Hari ini, 08.17', perangkat: 'Safari - macOS', lokasi_ip: 'Badung 117.102.104.44', status: 'Berhasil' },
+            { pengguna: 'Putu Ade Pranata', role: 'Guru', waktu: 'Hari ini, 07.55', perangkat: 'Chrome - Android', lokasi_ip: 'Badung 117.102.104.44', status: 'Berhasil' },
+            { pengguna: 'Tidak dikenal', role: '-', waktu: 'Hari ini, 03.14', perangkat: 'Firefox - Linux', lokasi_ip: 'Badung 117.102.104.44', status: 'Gagal' },
+            { pengguna: 'Ngurah Andhika', role: 'Murid', waktu: 'Kemarin, 19.32', perangkat: 'Chrome - Android', lokasi_ip: 'Badung 117.102.104.44', status: 'Berhasil' }
+          ]
+        });
+      }
+    }
+
+    // 3. GURU API
+    if (pathname.includes('guru.php')) {
+      const defaultPackages = [
+        { id: 1, nama_paket: 'Kurikulum 2020 Matematika', nama_mapel: 'Matematika Wajib', total_soal: 40, kategori: 'Ujian Akhir Semester' },
+        { id: 2, nama_paket: 'UAS Ganjil Semester 20', nama_mapel: 'Bahasa Indonesia', total_soal: 30, kategori: 'Ujian Akhir Semester' },
+        { id: 3, nama_paket: 'Try Out SMK Bali Global', nama_mapel: 'Pemrograman Web', total_soal: 50, kategori: 'Simulasi Ujian Sekolah' },
+        { id: 4, nama_paket: 'Latihan Soal Bahasa Bali', nama_mapel: 'Bahasa Bali', total_soal: 25, kategori: 'Latihan Mandiri' }
+      ];
+
+      if (action === 'get_packages') {
+        return resJson({ success: true, packages: defaultPackages });
+      }
+
+      let schedules = JSON.parse(localStorage.getItem('smkti_mock_schedules') || '[]');
+
+      if (action === 'get_schedules') {
+        return resJson({ success: true, schedules: schedules });
+      }
+
+      if (action === 'create_schedule') {
+        const pkgId = parseInt(postData.package_id || 1);
+        const pkg = defaultPackages.find(p => p.id === pkgId) || defaultPackages[0];
+        const newSch = {
+          id: Date.now(),
+          package_id: pkg.id,
+          nama_paket: pkg.nama_paket,
+          nama_mapel: pkg.nama_mapel,
+          tipe_ujian: postData.tipe_ujian || 'Ujian Tengah Semester',
+          kelas: postData.kelas || 'XII RPL 2',
+          durasi_menit: parseInt(postData.durasi_menit || 90),
+          tanggal: postData.tanggal || 'Hari ini',
+          jam_mulai: postData.jam_mulai || '08:00',
+          jam_selesai: postData.jam_selesai || '09:30',
+          status: postData.status || 'SEDANG BERLANGSUNG',
+          guru_pembimbing: 'Putu Ian, S.Kom.'
+        };
+        schedules.unshift(newSch);
+        localStorage.setItem('smkti_mock_schedules', JSON.stringify(schedules));
+        return resJson({ success: true, message: 'Jadwal ujian berhasil dirilis ke sistem! Siswa sekarang dapat melihat dan mengerjakannya.' });
+      }
+
+      if (action === 'toggle_schedule_status') {
+        const id = parseInt(postData.id || 0);
+        schedules = schedules.map(s => s.id === id ? { ...s, status: s.status === 'SEDANG BERLANGSUNG' ? 'BELUM DIMULAI' : 'SEDANG BERLANGSUNG' } : s);
+        localStorage.setItem('smkti_mock_schedules', JSON.stringify(schedules));
+        return resJson({ success: true, message: 'Status jadwal diperbarui.' });
+      }
+
+      if (action === 'delete_schedule') {
+        const id = parseInt(postData.id || 0);
+        schedules = schedules.filter(s => s.id !== id);
+        localStorage.setItem('smkti_mock_schedules', JSON.stringify(schedules));
+        return resJson({ success: true, message: 'Jadwal ujian berhasil dihapus.' });
+      }
+
+      if (action === 'get_analisis') {
+        const attempts = JSON.parse(localStorage.getItem('smkti_mock_attempts') || '[]');
+        const total = attempts.length;
+        const avg = total > 0 ? (attempts.reduce((a, b) => a + b.skor_total, 0) / total).toFixed(1) : '0';
+        const max = total > 0 ? Math.max(...attempts.map(a => a.skor_total)) : 0;
+        const lulus = total > 0 ? Math.round((attempts.filter(a => a.status_kelulusan === 'LULUS').length / total) * 100) + ' %' : '0 %';
+        return resJson({
+          success: true,
+          has_data: total > 0,
+          stats: {
+            rata_rata: avg,
+            nilai_tertinggi: String(max),
+            kelulusan: lulus,
+            total_peserta: total + ' Siswa'
+          },
+          results: attempts.map(a => ({
+            nama_siswa: a.nama_siswa,
+            kelas: a.kelas,
+            nilai_akhir: Math.round(a.skor_total),
+            status_kelulusan: a.status_kelulusan
+          }))
+        });
+      }
+    }
+
+    // 4. SISWA API
+    if (pathname.includes('siswa.php')) {
+      let schedules = JSON.parse(localStorage.getItem('smkti_mock_schedules') || '[]');
+      let attempts = JSON.parse(localStorage.getItem('smkti_mock_attempts') || '[]');
+
+      if (action === 'get_schedules') {
+        const completedMap = {};
+        attempts.forEach(a => completedMap[a.schedule_id] = a);
+
+        let activeCount = 0;
+        schedules.forEach(s => {
+          if (completedMap[s.id]) {
+            s.already_completed = true;
+            s.attempt_info = completedMap[s.id];
+          } else {
+            s.already_completed = false;
+            if (s.status === 'SEDANG BERLANGSUNG') activeCount++;
+          }
+        });
+
+        return resJson({
+          success: true,
+          stats: {
+            selesai_hari_ini: attempts.length + ' Ujian',
+            tersedia_sekarang: activeCount + ' Ujian',
+            telah_diselesaikan: attempts.length + ' Ujian'
+          },
+          schedules: schedules
+        });
+      }
+
+      if (action === 'start_exam') {
+        const schId = parseInt(urlObj.searchParams.get('schedule_id') || postData.schedule_id || (schedules[0] ? schedules[0].id : 0));
+        const sch = schedules.find(s => s.id === schId) || schedules[0];
+        if (!sch) {
+          return resJson({ success: false, message: 'Belum ada ujian yang aktif atau dirilis oleh guru.' });
+        }
+
+        // 40 Soal Matematika persis seperti di database
+        const questions = [
+          { id: 1, pertanyaan: 'Nilai dari limit x menuju 0 dari sin(4x) / (2x) adalah...', opsi_a: '1', opsi_b: '2', opsi_c: '4', opsi_d: '1/2', opsi_e: '0', kunci: 'B', bobot: '2.5' },
+          { id: 2, pertanyaan: 'Persamaan garis singgung lingkaran x² + y² = 25 di titik (3, 4) adalah...', opsi_a: '3x + 4y = 25', opsi_b: '4x + 3y = 25', opsi_c: '3x - 4y = 25', opsi_d: '4x - 3y = 25', opsi_e: 'x + y = 7', kunci: 'A', bobot: '2.5' },
+          { id: 3, pertanyaan: 'Diketahui sebuah kubus ABCD.EFGH dengan panjang rusuk 8 cm. Titik P terletak pada pertengahan rusuk FG. Jarak titik P ke bidang BDG adalah...', opsi_a: '2√3 cm', opsi_b: '4/3 √6 cm', opsi_c: '4√2 cm', opsi_d: '8/3 √3 cm', opsi_e: '4√3 cm', kunci: 'B', bobot: '2.5' },
+          { id: 4, pertanyaan: 'Diketahui matriks A = [2 3; 1 4] dan B = [1 0; 2 1]. Tentukan determinan dari matriks (A x B)...', opsi_a: '5', opsi_b: '10', opsi_c: '15', opsi_d: '20', opsi_e: '25', kunci: 'A', bobot: '2.5' },
+          { id: 5, pertanyaan: 'Turunan pertama dari fungsi f(x) = (3x² - 5)⁴ adalah f\'(x) = ...', opsi_a: '24x(3x² - 5)³', opsi_b: '12x(3x² - 5)³', opsi_c: '6x(3x² - 5)³', opsi_d: '4(3x² - 5)³', opsi_e: '24(3x² - 5)³', kunci: 'A', bobot: '2.5' }
+        ];
+
+        for (let i = 6; i <= 40; i++) {
+          const keys = ['A', 'B', 'C', 'D'];
+          questions.push({
+            id: i,
+            pertanyaan: `Soal nomor ${i}: Tentukan penyelesaian analitik terapan kurikulum SMK TI Bali Global Badung untuk modul kompetensi kejuruan ${i}.`,
+            opsi_a: `Opsi A solusi materi ${i}`,
+            opsi_b: `Opsi B solusi materi ${i}`,
+            opsi_c: `Opsi C solusi materi ${i}`,
+            opsi_d: `Opsi D solusi materi ${i}`,
+            opsi_e: `Opsi E solusi materi ${i}`,
+            kunci: keys[(i + 1) % 4],
+            bobot: '2.5'
+          });
+        }
+
+        window.__smkti_current_questions = questions;
+        window.__smkti_current_schedule = sch;
+
+        return resJson({
+          success: true,
+          exam: {
+            schedule_id: sch.id,
+            title: sch.nama_paket || sch.nama_mapel,
+            mapel: sch.nama_mapel,
+            kelas_info: `Kelas ${sch.kelas} | ${sch.guru_pembimbing || 'Putu Ian, S.Kom.'}`,
+            total_soal: 40,
+            remaining_seconds: (sch.durasi_menit || 90) * 60,
+            saved_answers: JSON.parse(localStorage.getItem('smkti_mock_current_answers') || '{}'),
+            questions: questions
+          }
+        });
+      }
+
+      if (action === 'save_answer') {
+        const qIdx = postData.question_index || 1;
+        let ans = JSON.parse(localStorage.getItem('smkti_mock_current_answers') || '{}');
+        ans[qIdx] = { jawaban: postData.jawaban, ragu: postData.is_ragu === 'true' };
+        localStorage.setItem('smkti_mock_current_answers', JSON.stringify(ans));
+        return resJson({ success: true });
+      }
+
+      if (action === 'submit_exam') {
+        const questions = window.__smkti_current_questions || [];
+        const ans = JSON.parse(localStorage.getItem('smkti_mock_current_answers') || '{}');
+        const sch = window.__smkti_current_schedule || (schedules[0] || { id: 1, nama_mapel: 'Matematika', kelas: 'XII RPL 2' });
+
+        let benar = 0, salah = 0, kosong = 0;
+        questions.forEach((q, idx) => {
+          const num = idx + 1;
+          const userAns = ans[num]?.jawaban;
+          if (userAns) {
+            if (userAns === q.kunci) benar++;
+            else salah++;
+          } else {
+            kosong++;
+          }
+        });
+
+        const totalQ = questions.length || 40;
+        const skor = Math.round((benar / totalQ) * 100);
+        const grade = skor >= 85 ? 'A' : (skor >= 75 ? 'B' : (skor >= 60 ? 'C' : 'D'));
+        const status = skor >= 75 ? 'LULUS' : 'REMEDIAL';
+
+        const newAttempt = {
+          schedule_id: sch.id,
+          nama_mapel: sch.nama_mapel || 'Matematika Wajib',
+          nama_siswa: 'Ngurah Andhika',
+          kelas: sch.kelas || 'XII RPL 2',
+          skor_total: skor,
+          grade: grade,
+          status_kelulusan: status,
+          benar: benar,
+          salah: salah,
+          kosong: kosong,
+          durasi_pengerjaan: '53 Menit',
+          tgl_selesai: new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Makassar' }).format(new Date())
+        };
+
+        attempts.unshift(newAttempt);
+        localStorage.setItem('smkti_mock_attempts', JSON.stringify(attempts));
+        localStorage.removeItem('smkti_mock_current_answers');
+
+        return resJson({
+          success: true,
+          message: 'Ujian berhasil diselesaikan! Nilai Anda telah dihitung.',
+          skor: skor,
+          grade: grade,
+          status: status
+        });
+      }
+
+      if (action === 'get_results') {
+        if (attempts.length === 0) {
+          return resJson({ success: true, has_results: false, message: 'Belum ada ujian yang diselesaikan.' });
+        }
+        const lat = attempts[0];
+        return resJson({
+          success: true,
+          has_results: true,
+          latest: {
+            mapel: lat.nama_mapel,
+            kelas_tgl: `${lat.nama_mapel} - ${lat.kelas} (${lat.tgl_selesai})`,
+            skor: lat.skor_total,
+            grade: `GRADE: ${lat.grade} - ${lat.status_kelulusan}`,
+            benar: lat.benar + ' Soal',
+            salah: lat.salah + ' Soal',
+            tidak_dijawab: lat.kosong + ' Soal',
+            durasi: lat.durasi_pengerjaan
+          },
+          history: attempts.map(a => ({
+            mapel: a.nama_mapel,
+            kelas: a.kelas,
+            tipe: 'Ujian CBT',
+            tanggal: a.tgl_selesai,
+            skor: a.skor_total,
+            status: a.status_kelulusan
+          }))
+        });
+      }
+    }
+
+    return originalFetch(url, options);
+  };
+})();
+
 const App = {
   currentUser: null,
   currentRole: 'super_admin',
