@@ -323,14 +323,19 @@
             tidak_dijawab: lat.kosong + ' Soal',
             durasi: lat.durasi_pengerjaan
           },
-          history: attempts.map(a => ({
-            mapel: a.nama_mapel,
-            kelas: a.kelas,
-            tipe: 'Ujian CBT',
-            tanggal: a.tgl_selesai,
-            skor: a.skor_total,
-            status: a.status_kelulusan
-          }))
+          history: attempts.map(a => {
+            const totalSoal = (a.benar || 0) + (a.salah || 0) + (a.kosong || 0);
+            return {
+              mapel: a.nama_mapel,
+              kelas: a.kelas,
+              tipe: 'Ujian CBT',
+              tanggal: a.tgl_selesai,
+              skor_ratio: `${a.benar || 0}/${totalSoal || 40} (Salah: ${a.salah || 0})`,
+              nilai: Math.round(a.skor_total !== undefined ? a.skor_total : (a.skor || 0)),
+              skor: a.skor_total,
+              status: a.status_kelulusan || 'LULUS'
+            };
+          })
         });
       }
     }
@@ -1306,20 +1311,24 @@ const App = {
       // Table
       const tbody = document.getElementById('siswa-history-tbody');
       if (tbody) {
-        tbody.innerHTML = data.history.map(h => `
+        tbody.innerHTML = (data.history || []).map(h => {
+          const ratio = h.skor_ratio || (h.benar !== undefined ? `${h.benar}/${(h.benar || 0) + (h.salah || 0) + (h.kosong || 0)} (Salah: ${h.salah || 0})` : '-');
+          const nilai = h.nilai !== undefined ? h.nilai : (h.skor !== undefined ? Math.round(h.skor) : 0);
+          return `
           <tr>
-            <td><strong>${h.mapel}</strong></td>
-            <td>${h.tipe}</td>
-            <td>${h.tanggal}</td>
-            <td>${h.skor_ratio}</td>
-            <td><strong style="color: #2563eb; font-size: 15px;">${h.nilai}</strong></td>
+            <td><strong>${h.mapel || '-'}</strong></td>
+            <td>${h.tipe || 'Ujian CBT'}</td>
+            <td>${h.tanggal || '-'}</td>
+            <td>${ratio}</td>
+            <td><strong style="color: #2563eb; font-size: 15px;">${nilai}</strong></td>
             <td>
               <span class="badge-pill ${h.status === 'LULUS' ? 'badge-status-aktif' : 'badge-status-gagal'}">
-                ● ${h.status}
+                ● ${h.status || 'SELESAI'}
               </span>
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
     } catch (e) {
       console.error(e);
